@@ -2,13 +2,17 @@
   "name": "dailygoals",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "vite"
+    "start": "vite",
+    "build": "vite build --emptyOutDir",
+    "preview": "vite preview",
+    "lint": "eslint *.js src/**/*.js",
+    "format": "prettier --ignore-path ./.gitignore --write \"./**/*.{html,json,js,ts,css}\"",
+    "test": "jest"
   },
   "keywords": [],
-  "author": "",
+  "author": "Herbert Moroni Gois",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^9.15.0",
