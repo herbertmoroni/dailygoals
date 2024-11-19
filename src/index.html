@@ -1,11 +1,72 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Goal Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    test
+    <div class="container">
+        <!-- Header Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="target"></i>
+                    <h3>Active Goals</h3>
+                </div>
+                <p id="active-goals-count" class="stat-value">0</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="trending-up"></i>
+                    <h3>Current Streak</h3>
+                </div>
+                <p id="current-streak" class="stat-value">0 days</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="award"></i>
+                    <h3>Best Streak</h3>
+                </div>
+                <p id="best-streak" class="stat-value">0 days</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i data-lucide="calendar"></i>
+                    <h3>Week Score</h3>
+                </div>
+                <p id="week-score" class="stat-value">0</p>
+            </div>
+        </div>
+
+        <!-- Goal Tracker Grid -->
+        <div class="tracker-card">
+            <table class="goal-table">
+                <thead>
+                    <tr id="days-header">
+                        <th class="goal-column">Goals</th>
+                        <!-- Days will be inserted here -->
+                    </tr>
+                </thead>
+                <tbody id="goals-list">
+                    <!-- Goals will be inserted here -->
+                </tbody>
+                <tfoot>
+                    <tr id="daily-scores">
+                        <td class="score-label">Daily Score</td>
+                        <!-- Scores will be inserted here -->
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/goalTracker.js" type="module"></script>
 </body>
 </html>
