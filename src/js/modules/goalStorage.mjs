@@ -5,6 +5,7 @@ import {
     doc, 
     getDoc, 
     setDoc, 
+    deleteDoc,
     collection, 
     getDocs 
 } from 'firebase/firestore';
@@ -67,6 +68,14 @@ export class GoalStorage {
             doc(this.db, 'users', uid, 'goals', goal.id),
             goal.toJSON()
         );
-        console.log('Goal saved:', goal.toJSON());
+        //console.log('Goal saved:', goal.toJSON());
+    }
+
+    async deleteGoal(uid, goalId) {
+        if (!this.auth.currentUser || this.auth.currentUser.uid !== uid) {
+            throw new Error('Unauthorized access');
+        }
+    
+        await deleteDoc(doc(this.db, 'users', uid, 'goals', goalId));
     }
 }

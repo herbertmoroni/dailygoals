@@ -9,6 +9,77 @@ export class GoalTracker {
         this.storage = new GoalStorage(db, auth);
         this.user = null;
         this.setupAuthListener(auth);
+        this.setupModalHandlers();
+    }
+
+    setupModalHandlers() {
+        const modal = document.getElementById('goalModal');
+        const form = document.getElementById('goalForm');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const iconPicker = document.getElementById('iconPicker');
+        const addButton = document.getElementById('addGoalBtn');
+    
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = {
+                name: form.querySelector('#goalName').value,
+                icon: document.querySelector('#selectedIcon').textContent,
+                positive: form.querySelector('[name="goalType"]:checked').value === 'positive',
+                points: form.querySelector('[name="goalType"]:checked').value === 'positive' ? 1 : -1
+            };
+            this.handleGoalSubmit(formData);
+            modal.style.display = 'none';
+        });
+    
+        cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+        iconPicker.addEventListener('click', () => this.showEmojiPicker());
+        addButton.addEventListener('click', () => {
+            form.reset();
+            modal.style.display = 'flex';
+        });
+    }
+
+    showEmojiPicker() {
+        const emojis = ['📚', '🏃', '🧘', '💪', '🎯', '💡', '🍎', '💤', '💧', '🎨', '✍️', '🎵'];
+        let picker = document.querySelector('.emoji-picker');
+        
+        if (picker) {
+            picker.remove();
+            return;
+        }
+    
+        picker = document.createElement('div');
+        picker.className = 'emoji-picker';
+        picker.innerHTML = emojis.map(emoji => 
+            `<button type="button" class="emoji-btn">${emoji}</button>`
+        ).join('');
+    
+        picker.addEventListener('click', (e) => {
+            if (e.target.classList.contains('emoji-btn')) {
+                document.querySelector('#selectedIcon').textContent = e.target.textContent;
+                picker.remove();
+            }
+        });
+    
+        const iconPicker = document.getElementById('iconPicker');
+        iconPicker.parentNode.insertBefore(picker, iconPicker.nextSibling);
+    }
+    
+    handleGoalSubmit(formData) {
+        const goal = new Goal(
+            crypto.randomUUID(),
+            formData.name,
+            formData.icon,
+            formData.positive,
+            formData.points
+        );
+    
+        if (this.user.uid !== 'demo') {
+            this.storage.saveGoal(this.user.uid, goal);
+        }
+        
+        this.user.addGoal(goal);
+        this.render();
     }
 
     setupAuthListener(auth) {
@@ -64,14 +135,32 @@ export class GoalTracker {
     createGoalRow(goal) {
         const row = document.createElement('tr');
         row.className = 'goal-row';
-
-        row.appendChild(this.createNameCell(goal));
+    
+        // Add delete button to name cell
+        const nameCell = this.createNameCell(goal);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i data-lucide="trash-2"></i>';
+        deleteBtn.onclick = () => this.deleteGoal(goal.id);
+        nameCell.querySelector('.goal-name').appendChild(deleteBtn);
+        
+        row.appendChild(nameCell);
         
         goal.checks.forEach((checked, idx) => {
             row.appendChild(this.createCheckCell(goal, checked, idx));
         });
-
+    
         return row;
+    }
+
+    async deleteGoal(goalId) {
+        if (confirm('Are you sure you want to delete this goal?')) {
+            if (this.user.uid !== 'demo') {
+                await this.storage.deleteGoal(this.user.uid, goalId);
+            }
+            this.user.removeGoal(goalId);
+            this.render();
+        }
     }
 
     createNameCell(goal) {

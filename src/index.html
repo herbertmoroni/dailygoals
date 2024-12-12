@@ -66,6 +66,7 @@
 
         <!-- Goal Tracker Grid -->
         <section class="tracker-card">
+            <button id="addGoalBtn" class="add-goal-btn">+ Add Goal</button>
             <table class="goal-table">
                 <thead>
                     <tr id="days-header">
@@ -85,6 +86,40 @@
             </table>
         </section>
     </main>
+
+    <div id="goalModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Goal</h2>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label for="goalName">Goal Name:</label>
+                    <input type="text" id="goalName" required>
+                </div>
+                <div class="form-group">
+                    <label for="goalIcon">Icon:</label>
+                    <button type="button" id="iconPicker">Select Icon</button>
+                    <span id="selectedIcon">📌</span>
+                </div>
+                <div class="form-group">
+                    <label>Type:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="goalType" value="positive" checked>
+                            Positive (+1 point)
+                        </label>
+                        <label>
+                            <input type="radio" name="goalType" value="negative">
+                            Negative (-1 point)
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="js/main.js" type="module"></script>
 </body>
