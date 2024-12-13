@@ -1,5 +1,5 @@
 import { auth, db, signInWithGoogle } from './modules/auth.mjs';
-import { GoalTracker } from './modules/GoalTracker.mjs';
+import { GoalTracker } from './modules/goalTracker.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
     const tracker = new GoalTracker(auth, db);
