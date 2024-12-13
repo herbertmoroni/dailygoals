@@ -63,12 +63,11 @@ export class GoalStorage {
         if (!this.auth.currentUser || this.auth.currentUser.uid !== uid) {
             throw new Error('Unauthorized access');
         }
-
+    
         await setDoc(
-            doc(this.db, 'users', uid, 'goals', goal.id),
+            doc(this.db, 'users', uid, 'goals', goal.id), 
             goal.toJSON()
         );
-        //console.log('Goal saved:', goal.toJSON());
     }
 
     async deleteGoal(uid, goalId) {

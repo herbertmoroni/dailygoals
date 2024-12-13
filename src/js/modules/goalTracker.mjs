@@ -18,7 +18,7 @@ export class GoalTracker {
         const cancelBtn = document.getElementById('cancelBtn');
         const iconPicker = document.getElementById('iconPicker');
         const addButton = document.getElementById('addGoalBtn');
-    
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = {
@@ -30,11 +30,12 @@ export class GoalTracker {
             this.handleGoalSubmit(formData);
             modal.style.display = 'none';
         });
-    
+
         cancelBtn.addEventListener('click', () => modal.style.display = 'none');
         iconPicker.addEventListener('click', () => this.showEmojiPicker());
         addButton.addEventListener('click', () => {
             form.reset();
+            document.querySelector('#selectedIcon').textContent = '📌';
             modal.style.display = 'flex';
         });
     }
@@ -80,6 +81,7 @@ export class GoalTracker {
         
         this.user.addGoal(goal);
         this.render();
+        document.getElementById('goalModal').style.display = 'none';
     }
 
     setupAuthListener(auth) {
@@ -109,11 +111,11 @@ export class GoalTracker {
         this.renderDailyScores();
     }
 
-    async toggleGoal(goalId, dayIndex) {
+    async toggleGoal(goalId, dateStr) {
         const goal = this.user.getGoal(goalId);
         if (!goal) return;
-
-        goal.toggle(dayIndex);
+    
+        goal.toggle(dateStr);
         if (this.user.uid !== 'demo') {
             await this.storage.saveGoal(this.user.uid, goal);
         }
@@ -123,31 +125,39 @@ export class GoalTracker {
     renderGoals() {
         const goalsList = document.getElementById('goals-list');
         goalsList.innerHTML = '';
-
+    
+        const dates = this.getWeekDates();
+        
         this.user.getAllGoals().forEach(goal => {
-            const row = this.createGoalRow(goal);
+            const row = this.createGoalRow(goal, dates);
             goalsList.appendChild(row);
         });
-
+    
         lucide.createIcons();
     }
 
-    createGoalRow(goal) {
+    getWeekDates() {
+        const today = new Date();
+        const day = today.getDay();
+        const dates = [];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - day + i);
+            dates.push(date.toISOString().split('T')[0]);
+        }
+        
+        return dates;
+    }
+
+    createGoalRow(goal, dates) {
         const row = document.createElement('tr');
         row.className = 'goal-row';
     
-        // Add delete button to name cell
-        const nameCell = this.createNameCell(goal);
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.innerHTML = '<i data-lucide="trash-2"></i>';
-        deleteBtn.onclick = () => this.deleteGoal(goal.id);
-        nameCell.querySelector('.goal-name').appendChild(deleteBtn);
+        row.appendChild(this.createNameCell(goal));
         
-        row.appendChild(nameCell);
-        
-        goal.checks.forEach((checked, idx) => {
-            row.appendChild(this.createCheckCell(goal, checked, idx));
+        dates.forEach(dateStr => {
+            row.appendChild(this.createCheckCell(goal, goal.isChecked(dateStr), dateStr));
         });
     
         return row;
@@ -165,16 +175,26 @@ export class GoalTracker {
 
     createNameCell(goal) {
         const cell = document.createElement('td');
-        cell.innerHTML = `
-            <div class="goal-name">
-                <span class="goal-icon">${goal.icon}</span>
-                <span class="goal-text">${goal.name}</span>
-            </div>
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'goal-name';
+        
+        nameDiv.innerHTML = `
+            <span class="goal-icon">${goal.icon}</span>
+            <span class="goal-text">${goal.name}</span>
         `;
+    
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i data-lucide="trash-2"></i>';
+        deleteBtn.onclick = () => this.deleteGoal(goal.id);
+        
+        nameDiv.appendChild(deleteBtn);
+        cell.appendChild(nameDiv);
         return cell;
     }
 
-    createCheckCell(goal, checked, idx) {
+    
+    createCheckCell(goal, checked, dateStr) {
         const cell = document.createElement('td');
         const button = document.createElement('button');
         button.className = `check-button ${checked ? 'checked' : ''} ${goal.positive ? 'positive' : 'negative'}`;
@@ -189,39 +209,79 @@ export class GoalTracker {
             button.appendChild(circle);
         }
 
-        button.addEventListener('click', () => this.toggleGoal(goal.id, idx));
+        button.addEventListener('click', () => this.toggleGoal(goal.id, dateStr));
         cell.appendChild(button);
         return cell;
     }
 
-    updateStats() {
-        document.getElementById('active-goals-count').textContent = 
-            this.user.getAllGoals().length;
-        
-        const weekScore = this.user.getWeekScore();
-        document.getElementById('week-score').textContent = 
-            weekScore > 0 ? `+${weekScore}` : weekScore;
-        
-        document.getElementById('current-streak').textContent = '5 days';
-        document.getElementById('best-streak').textContent = '12 days';
-    }
-
     renderDailyScores() {
+        if (!this.user) return;
+        
         const scoresRow = document.getElementById('daily-scores');
         while (scoresRow.children.length > 1) {
             scoresRow.removeChild(scoresRow.lastChild);
         }
-
-        this.days.forEach((_, idx) => {
+    
+        const dates = this.getWeekDates();
+        dates.forEach(dateStr => {
             const dailyScore = this.user.getAllGoals()
                 .reduce((score, goal) => 
-                    score + (goal.checks[idx] ? goal.points : 0), 0);
+                    score + (goal.isChecked(dateStr) ? goal.points : 0), 0);
                 
             const td = document.createElement('td');
             td.className = dailyScore >= 0 ? 'score-positive' : 'score-negative';
             td.textContent = dailyScore > 0 ? `+${dailyScore}` : dailyScore;
             scoresRow.appendChild(td);
         });
+    }
+    
+    getStreaks() {
+        if (!this.user) return { current: 0, best: 0 };
+        
+        const dates = this.getWeekDates();
+        const today = new Date().toISOString().split('T')[0];
+        let currentStreak = 0;
+        let bestStreak = 0;
+        let tempStreak = 0;
+    
+        for (let date of dates) {
+            const allCompleted = this.user.getAllGoals().every(goal => 
+                goal.positive ? goal.isChecked(date) : !goal.isChecked(date)
+            );
+    
+            if (allCompleted) {
+                tempStreak++;
+                if (tempStreak > bestStreak) bestStreak = tempStreak;
+            } else {
+                tempStreak = 0;
+            }
+    
+            if (date <= today && allCompleted) {
+                currentStreak = tempStreak;
+            }
+        }
+    
+        return { current: currentStreak, best: bestStreak };
+    }
+    
+    updateStats() {
+        if (!this.user) return;
+        
+        const goals = this.user.getAllGoals();
+        
+        // Active Goals
+        document.getElementById('active-goals-count').textContent = goals.length;
+        
+        // Week Score
+        const dates = this.getWeekDates();
+        const weekScore = goals.reduce((total, goal) => 
+            goal.getScore(dates[0], dates[6]), 0);
+        document.getElementById('week-score').textContent = weekScore;
+    
+        // Current and Best Streaks
+        const { current, best } = this.getStreaks();
+        document.getElementById('current-streak').textContent = `${current} days`;
+        document.getElementById('best-streak').textContent = `${best} days`;
     }
 
     renderDaysHeader() {
@@ -230,9 +290,11 @@ export class GoalTracker {
             headerRow.removeChild(headerRow.lastChild);
         }
         
-        this.days.forEach(day => {
+        const dates = this.getWeekDates();
+        dates.forEach(dateStr => {
             const th = document.createElement('th');
-            th.textContent = day;
+            const date = new Date(dateStr);
+            th.textContent = this.days[date.getDay()];
             headerRow.appendChild(th);
         });
     }

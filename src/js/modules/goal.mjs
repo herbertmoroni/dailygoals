@@ -5,16 +5,29 @@ export class Goal {
         this.icon = icon;
         this.positive = positive;
         this.points = points;
-        this.checks = new Array(7).fill(false);
+        this.dailyChecks = {};
     }
 
-    toggle(dayIndex) {
-        this.checks[dayIndex] = !this.checks[dayIndex];
+    toggle(dateString) {
+        this.dailyChecks[dateString] = !this.dailyChecks[dateString];
     }
 
-    getScore() {
-        return this.checks.reduce((score, checked) => 
-            score + (checked ? this.points : 0), 0);
+    isChecked(dateString) {
+        return !!this.dailyChecks[dateString];
+    }
+
+    getScore(startDate, endDate) {
+        let score = 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            if (this.dailyChecks[dateStr]) {
+                score += this.points;
+            }
+        }
+        return score;
     }
 
     toJSON() {
@@ -24,7 +37,7 @@ export class Goal {
             icon: this.icon,
             positive: this.positive,
             points: this.points,
-            checks: this.checks
+            dailyChecks: this.dailyChecks
         };
     }
 
@@ -36,7 +49,7 @@ export class Goal {
             data.positive,
             data.points
         );
-        goal.checks = data.checks;
+        goal.dailyChecks = data.dailyChecks || {};
         return goal;
     }
 }
