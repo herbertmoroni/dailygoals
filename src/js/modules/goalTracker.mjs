@@ -103,11 +103,11 @@ export class GoalTracker {
         });
     }
 
-    render() {
+    async render() {
         this.initializeLucideIcons();
         this.renderDaysHeader();
         this.renderGoals();
-        this.updateStats();
+        await this.updateStats();
         this.renderDailyScores();
     }
 
@@ -119,7 +119,7 @@ export class GoalTracker {
         if (this.user.uid !== 'demo') {
             await this.storage.saveGoal(this.user.uid, goal);
         }
-        this.render();
+        await this.render();  
     }
 
     renderGoals() {
@@ -238,55 +238,49 @@ export class GoalTracker {
     }
     
     async updateStreaks() {
-        if (!this.user || this.user.uid === 'demo') {
-            const dates = this.getWeekDates();
-            let currentStreak = 0;
-            let bestStreak = 0;
-            let tempStreak = 0;
-            const today = new Date().toISOString().split('T')[0];
-            
-            for (const date of dates) {
-                const dayScore = this.user.getAllGoals().reduce((score, goal) => 
-                    score + (goal.isChecked(date) ? goal.points : 0), 0);
-                
-                if (dayScore > 0) {
-                    tempStreak++;
-                    bestStreak = Math.max(bestStreak, tempStreak);
-                    if (date <= today) {
-                        currentStreak = tempStreak;
-                    }
-                } else {
-                    tempStreak = 0;
-                    if (date <= today) {
-                        currentStreak = 0;
-                    }
-                }
+        if (!this.user) return { current: 0, best: 0 };
+        
+        const dates = this.getWeekDates();
+        const dailyScores = [];
+        
+        // Calculate scores for each day
+        dates.forEach(date => {
+            const score = this.user.getAllGoals().reduce((total, goal) => 
+                total + (goal.isChecked(date) ? goal.points : 0), 0);
+            dailyScores.push(score);
+        });
+        
+        let currentStreak = 0;
+        let bestStreak = 0;
+        let tempStreak = 0;
+        
+        // Calculate streaks from newest to oldest
+        for (let i = dailyScores.length - 1; i >= 0; i--) {
+            if (dailyScores[i] > 0) {
+                tempStreak++;
+                currentStreak = tempStreak;
+                bestStreak = Math.max(bestStreak, tempStreak);
+            } else {
+                tempStreak = 0;
             }
-            return { current: currentStreak, best: bestStreak };
         }
+        
+        return { current: currentStreak, best: bestStreak };
     }
     
     async updateStats() {
         if (!this.user) return;
         
-        // Update active goals count
         document.getElementById('active-goals-count').textContent = this.user.getAllGoals().length;
         
-        // Calculate week score
         const dates = this.getWeekDates();
         const weekScore = this.user.getAllGoals().reduce((total, goal) => 
             total + goal.getScore(dates[0], dates[6]), 0);
         document.getElementById('week-score').textContent = weekScore;
     
-        try {
-            const streaks = await this.updateStreaks() || { current: 0, best: 0 };
-            document.getElementById('current-streak').textContent = `${streaks.current} days`;
-            document.getElementById('best-streak').textContent = `${streaks.best} days`;
-        } catch (error) {
-            console.error('Error updating streaks:', error);
-            document.getElementById('current-streak').textContent = '0 days';
-            document.getElementById('best-streak').textContent = '0 days';
-        }
+        const streaks = await this.updateStreaks();
+        document.getElementById('current-streak').textContent = `${streaks.current} days`;
+        document.getElementById('best-streak').textContent = `${streaks.best} days`;
     }
 
     renderDaysHeader() {
