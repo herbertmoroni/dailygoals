@@ -322,3 +322,16 @@ body {
 .text-gray-500 {
     color: #6b7280;
 }
+
+.goal-row {
+    cursor: grab;
+}
+
+.goal-row.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.goal-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}

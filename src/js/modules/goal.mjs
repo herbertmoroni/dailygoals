@@ -1,10 +1,11 @@
 export class Goal {
-    constructor(id, name, icon, positive, points) {
+    constructor(id, name, icon, positive, points, order = 0) {
         this.id = id;
         this.name = name;
         this.icon = icon;
         this.positive = positive;
         this.points = points;
+        this.order = order;
         this.dailyChecks = {};
     }
 
@@ -37,6 +38,7 @@ export class Goal {
             icon: this.icon,
             positive: this.positive,
             points: this.points,
+            order: this.order,
             dailyChecks: this.dailyChecks
         };
     }
@@ -47,7 +49,8 @@ export class Goal {
             data.name,
             data.icon,
             data.positive,
-            data.points
+            data.points,
+            data.order
         );
         goal.dailyChecks = data.dailyChecks || {};
         return goal;

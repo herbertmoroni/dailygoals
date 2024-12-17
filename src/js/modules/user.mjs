@@ -19,7 +19,8 @@ export class User {
     }
 
     getAllGoals() {
-        return Array.from(this.goals.values());
+        return Array.from(this.goals.values())
+            .sort((a, b) => a.order - b.order);
     }
 
     getWeekScore() {

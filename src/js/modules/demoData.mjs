@@ -5,6 +5,7 @@ export const demoGoals = [
         icon: '🏃', 
         positive: true, 
         points: 1,
+        order: 0,
         dailyChecks: {
             [getWeekDates()[0]]: true,
             [getWeekDates()[2]]: true,
@@ -18,6 +19,7 @@ export const demoGoals = [
         icon: '📚',
         positive: true,
         points: 1,
+        order: 1,
         dailyChecks: {
             [getWeekDates()[0]]: true,
             [getWeekDates()[1]]: true,
@@ -32,6 +34,7 @@ export const demoGoals = [
         icon: '🧘',
         positive: true,
         points: 1,
+        order: 2,
         dailyChecks: {
             [getWeekDates()[1]]: true,
             [getWeekDates()[2]]: true,
@@ -45,6 +48,7 @@ export const demoGoals = [
         icon: '🍪',
         positive: false,
         points: -1,
+        order: 3,
         dailyChecks: {
             [getWeekDates()[0]]: true,
             [getWeekDates()[3]]: true,

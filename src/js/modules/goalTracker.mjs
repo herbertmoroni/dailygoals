@@ -125,15 +125,46 @@ export class GoalTracker {
     renderGoals() {
         const goalsList = document.getElementById('goals-list');
         goalsList.innerHTML = '';
-    
-        const dates = this.getWeekDates();
+        
+        goalsList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = goalsList.querySelector('.dragging');
+            if (!dragging) return;
+            
+            const siblings = [...goalsList.querySelectorAll('tr:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                const rect = sibling.getBoundingClientRect();
+                return e.clientY <= rect.top + rect.height / 2;
+            });
+            
+            if (nextSibling) {
+                goalsList.insertBefore(dragging, nextSibling);
+            } else {
+                goalsList.appendChild(dragging);
+            }
+        });
         
         this.user.getAllGoals().forEach(goal => {
-            const row = this.createGoalRow(goal, dates);
+            const row = this.createGoalRow(goal, this.getWeekDates());
             goalsList.appendChild(row);
         });
-    
+        
         lucide.createIcons();
+    }
+    
+    async handleDragEnd() {
+        const goals = [...document.querySelectorAll('.goal-row')].map((row, index) => {
+            const goalId = row.dataset.goalId;
+            const goal = this.user.getGoal(goalId);
+            goal.order = index;
+            return goal;
+        });
+    
+        if (this.user.uid !== 'demo') {
+            await Promise.all(goals.map(goal => 
+                this.storage.saveGoal(this.user.uid, goal)
+            ));
+        }
     }
 
     getWeekDates() {
@@ -155,13 +186,25 @@ export class GoalTracker {
     createGoalRow(goal, dates) {
         const row = document.createElement('tr');
         row.className = 'goal-row';
-    
+        row.draggable = true;
+        row.dataset.goalId = goal.id;
+        
+        row.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', goal.id);
+            row.classList.add('dragging');
+        });
+        
+        row.addEventListener('dragend', async () => {
+            row.classList.remove('dragging');
+            await this.handleDragEnd();
+        });
+        
         row.appendChild(this.createNameCell(goal));
         
         dates.forEach(dateStr => {
             row.appendChild(this.createCheckCell(goal, goal.isChecked(dateStr), dateStr));
         });
-    
+        
         return row;
     }
 
