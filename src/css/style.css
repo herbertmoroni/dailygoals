@@ -314,3 +314,11 @@ body {
     background: var(--gray-50);
     border-radius: 9999px;
 }
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}

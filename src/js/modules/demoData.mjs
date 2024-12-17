@@ -55,14 +55,14 @@ export const demoGoals = [
  
  function getWeekDates() {
     const today = new Date();
-    const day = today.getDay();
-    const dates = [];
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - today.getDay());  // Go back to last Sunday
     
+    const dates = [];
     for (let i = 0; i < 7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - day + i);
+        const date = new Date(sunday);
+        date.setDate(sunday.getDate() + i);
         dates.push(date.toISOString().split('T')[0]);
     }
-    
     return dates;
- }
+}

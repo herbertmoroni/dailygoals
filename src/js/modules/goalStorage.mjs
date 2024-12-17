@@ -77,4 +77,32 @@ export class GoalStorage {
     
         await deleteDoc(doc(this.db, 'users', uid, 'goals', goalId));
     }
+
+    async saveStreak(uid, date, score) {
+        if (!this.auth.currentUser || this.auth.currentUser.uid !== uid) {
+            throw new Error('Unauthorized access');
+        }
+        
+        await setDoc(
+            doc(this.db, 'users', uid, 'streaks', date), 
+            { score, date }
+        );
+    }
+
+    async getHistoricalStreaks(uid) {
+        if (!this.auth.currentUser || this.auth.currentUser.uid !== uid) {
+            throw new Error('Unauthorized access');
+        }
+
+        const streaksRef = collection(this.db, 'users', uid, 'streaks');
+        const snapshot = await getDocs(streaksRef);
+        const streaks = {};
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            streaks[doc.id] = data.score;
+        });
+        
+        return streaks;
+    }
 }
